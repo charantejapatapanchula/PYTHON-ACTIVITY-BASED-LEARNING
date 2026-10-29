@@ -1,0 +1,122 @@
+
+# Progressive Electricity Billing System
+
+FIXED_CHARGE = 50
+SURCHARGE_RATE = 0.05
+REBATE_RATE = 0.05
+INCREASE_LIMIT = 30
+
+
+def calculate_energy_charge(units):
+    if units <= 100:
+        return units * 1.50
+    elif units <= 200:
+        return 100 * 1.50 + (units - 100) * 2.50
+    elif units <= 300:
+        return (
+            100 * 1.50
+            + 100 * 2.50
+            + (units - 200) * 4.00
+        )
+    else:
+        return (
+            100 * 1.50
+            + 100 * 2.50
+            + 100 * 4.00
+            + (units - 300) * 6.00
+        )
+
+
+def calculate_bill(units):
+    energy_charge = calculate_energy_charge(units)
+    surcharge = 0
+    rebate = 0
+
+    if units > 200:
+        surcharge = energy_charge * SURCHARGE_RATE
+    elif units <= 100:
+        rebate = energy_charge * REBATE_RATE
+
+    total = energy_charge + FIXED_CHARGE + surcharge - rebate
+
+    return energy_charge, surcharge, rebate, total
+
+
+def main():
+    n = int(input("Enter number of months: "))
+
+    previous_bill = None
+    results = []
+
+    for i in range(n):
+        month = input("\nEnter month name: ")
+        units = float(input("Enter units consumed: "))
+
+        if units < 0:
+            print("Units cannot be negative. Try again.")
+            continue
+
+        energy, surcharge, rebate, bill = calculate_bill(units)
+
+        if previous_bill is None:
+            increase = None
+            status = "First month"
+        else:
+            increase = (
+                (bill - previous_bill) / previous_bill * 100
+                if previous_bill != 0 else None
+            )
+
+            if increase is not None and increase > INCREASE_LIMIT:
+                status = "Unusual increase"
+            else:
+                status = "Normal"
+
+        results.append((
+            month, units, energy, surcharge,
+            rebate, bill, increase, status
+        ))
+
+        previous_bill = bill
+
+    print("\n--- Monthly Electricity Bill Report ---")
+    print(
+        "Month | Units | Energy | Surcharge | Rebate | "
+        "Total Bill | Increase | Status"
+    )
+
+    for row in results:
+        month, units, energy, surcharge, rebate, bill, increase, status = row
+
+        increase_text = (
+            "-" if increase is None else f"{increase:.2f}%"
+        )
+
+        print(
+            f"{month} | {units:g} | Rs.{energy:.2f} | "
+            f"Rs.{surcharge:.2f} | Rs.{rebate:.2f} | "
+            f"Rs.{bill:.2f} | {increase_text} | {status}"
+        )
+
+
+if __name__ == "__main__":
+    main()
+Enter number of months: 4
+
+Enter month name: January
+Enter units consumed: 80
+
+Enter month name: February
+Enter units consumed: 150
+
+Enter month name: March
+Enter units consumed: 230
+
+Enter month name: April
+Enter units consumed: 240
+--- Monthly Electricity Bill Report ---
+Month | Units | Energy | Surcharge | Rebate | Total Bill | Increase | Status
+January | 80 | Rs.120.00 | Rs.0.00 | Rs.6.00 | Rs.164.00 | - | First month
+February | 150 | Rs.275.00 | Rs.0.00 | Rs.0.00 | Rs.325.00 | 98.17% | Unusual increase
+March | 230 | Rs.520.00 | Rs.26.00 | Rs.0.00 | Rs.596.00 | 83.38% | Unusual increase
+April | 240 | Rs.560.00 | Rs.28.00 | Rs.0.00 | Rs.638.00 | 7.05% | Normal
